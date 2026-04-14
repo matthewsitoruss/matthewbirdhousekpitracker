@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matthew Sitorus' KPI Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f7ff;
+      min-height: 100vh;
+      color: #1a2b3c;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #d6e8f7;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: #1a2b3c;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .date-badge {
+      font-size: 0.82rem;
+      color: #6b8fae;
+      background: #eaf3fb;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .nav-btn {
+      border: 1px solid #d6e8f7;
+      border-radius: 8px;
+      background: #fff;
+      color: #1e78c2;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .nav-btn:hover { background: #eaf3fb; border-color: #5aadea; }
+    .nav-btn.active { background: #1e78c2; color: #fff; border-color: #1e78c2; }
+
+    /* ── Views ── */
+    .view { display: none; }
+    .view.visible { display: block; }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 36px 24px 60px;
+    }
+
+    /* ── Section label ── */
+    .section-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #6b8fae;
+      margin-bottom: 14px;
+    }
+
+    /* ── Platform cards ── */
+    .platforms {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 680px) { .platforms { grid-template-columns: 1fr; } }
+
+    .platform-card {
+      background: #fff;
+      border: 1px solid #d6e8f7;
+      border-radius: 14px;
+      padding: 24px 26px;
+    }
+
+    .platform-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .platform-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+
+    .icon-x  { background: #1a1a1a; }
+    .icon-li { background: #0077b5; }
+
+    .platform-name { font-size: 1rem; font-weight: 600; color: #1a2b3c; }
+
+    /* ── KPI rows ── */
+    .kpi-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eef5fb;
+    }
+    .kpi-row:last-child { border-bottom: none; }
+
+    .kpi-label { font-size: 0.875rem; color: #4a6a84; font-weight: 500; }
+
+    .kpi-input-wrap { display: flex; align-items: center; gap: 8px; }
+
+    .kpi-input {
+      width: 68px; text-align: center;
+      border: 1px solid #cce0f0; border-radius: 8px;
+      padding: 6px 8px; font-size: 0.95rem; font-weight: 600;
+      color: #1a2b3c; background: #f5f9fd; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -moz-appearance: textfield;
+    }
+    .kpi-input::-webkit-outer-spin-button,
+    .kpi-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .kpi-input:focus {
+      border-color: #5aadea;
+      box-shadow: 0 0 0 3px rgba(90,173,234,0.18);
+      background: #fff;
+    }
+
+    .btn-inc, .btn-dec {
+      width: 26px; height: 26px;
+      border: 1px solid #cce0f0; border-radius: 6px;
+      background: #f5f9fd; cursor: pointer;
+      font-size: 1rem; color: #5aadea;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s, border-color 0.12s;
+      user-select: none;
+    }
+    .btn-inc:hover, .btn-dec:hover { background: #e0f0fb; border-color: #5aadea; }
+
+    /* ── Performance stats ── */
+    .perf-card {
+      background: #fff;
+      border: 1px solid #d6e8f7;
+      border-radius: 14px;
+      padding: 24px 26px;
+      margin-bottom: 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-tile {
+      background: #f0f7ff;
+      border: 1px solid #d6e8f7;
+      border-radius: 10px;
+      padding: 16px 18px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.7rem; font-weight: 700;
+      color: #1e78c2; line-height: 1; margin-bottom: 6px;
+    }
+
+    .stat-label { font-size: 0.75rem; color: #6b8fae; font-weight: 500; }
+
+    /* ── Focus areas ── */
+    .focus-card {
+      background: #fff;
+      border: 1px solid #d6e8f7;
+      border-radius: 14px;
+      padding: 24px 26px;
+    }
+
+    .focus-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+    .focus-item { display: flex; align-items: center; gap: 10px; }
+
+    .focus-item input[type="text"] {
+      flex: 1;
+      border: 1px solid #cce0f0; border-radius: 8px;
+      padding: 8px 12px; font-size: 0.875rem;
+      color: #1a2b3c; background: #f5f9fd; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .focus-item input[type="text"]:focus {
+      border-color: #5aadea;
+      box-shadow: 0 0 0 3px rgba(90,173,234,0.18);
+      background: #fff;
+    }
+    .focus-item input[type="text"]::placeholder { color: #9fbdd4; }
+
+    .btn-remove {
+      width: 28px; height: 28px;
+      border: none; border-radius: 6px;
+      background: #fde8e8; color: #e05c5c;
+      font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s; flex-shrink: 0;
+    }
+    .btn-remove:hover { background: #fac8c8; }
+
+    .btn-add-focus {
+      margin-top: 12px;
+      border: 1px dashed #5aadea; border-radius: 8px;
+      background: transparent; color: #5aadea;
+      font-size: 0.85rem; font-weight: 500;
+      padding: 8px 16px; cursor: pointer; width: 100%;
+      transition: background 0.12s;
+    }
+    .btn-add-focus:hover { background: #eaf3fb; }
+
+    /* ── Save EOD button ── */
+    .eod-bar {
+      margin-top: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-save-eod {
+      background: #1e78c2;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 40px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.2px;
+      box-shadow: 0 2px 12px rgba(30,120,194,0.18);
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-save-eod:hover {
+      background: #1564a8;
+      box-shadow: 0 4px 18px rgba(30,120,194,0.26);
+    }
+    .btn-save-eod:active { transform: scale(0.98); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: #1a2b3c; color: #fff;
+      padding: 12px 24px; border-radius: 10px;
+      font-size: 0.875rem; font-weight: 500;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Past Performances view ── */
+    .pp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .pp-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1a2b3c;
+    }
+
+    .pp-empty {
+      background: #fff;
+      border: 1px solid #d6e8f7;
+      border-radius: 14px;
+      padding: 60px 24px;
+      text-align: center;
+      color: #9fbdd4;
+      font-size: 0.95rem;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .history-card {
+      background: #fff;
+      border: 1px solid #d6e8f7;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .history-card-header {
+      background: #f0f7ff;
+      border-bottom: 1px solid #d6e8f7;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .history-date {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e78c2;
+    }
+
+    .history-summary {
+      font-size: 0.8rem;
+      color: #6b8fae;
+      font-weight: 500;
+    }
+
+    .history-body { padding: 20px 22px; }
+
+    .history-platforms {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 580px) { .history-platforms { grid-template-columns: 1fr; } }
+
+    .history-platform-block h4 {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #6b8fae;
+      margin-bottom: 10px;
+    }
+
+    .history-kpi-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #f0f7ff;
+      font-size: 0.845rem;
+    }
+    .history-kpi-row:last-child { border-bottom: none; }
+
+    .history-kpi-label { color: #4a6a84; }
+    .history-kpi-val   { font-weight: 600; color: #1a2b3c; }
+
+    .history-stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .history-stat-pill {
+      background: #eaf3fb;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      color: #1e78c2;
+    }
+
+    .history-stat-pill strong { font-weight: 700; }
+
+    .history-focus h4 {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #6b8fae;
+      margin-bottom: 8px;
+    }
+
+    .history-focus ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .history-focus ul li {
+      background: #f0f7ff;
+      border: 1px solid #d6e8f7;
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 0.82rem;
+      color: #4a6a84;
+    }
+
+    .btn-delete-entry {
+      border: 1px solid #fac8c8;
+      background: #fff;
+      color: #e05c5c;
+      border-radius: 7px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn-delete-entry:hover { background: #fde8e8; }
+
+    .spacer { margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Matthew Sitorus' KPI Tracker</h1>
+  <div class="header-right">
+    <span class="date-badge" id="dateBadge"></span>
+    <button class="nav-btn active" id="navTracker" onclick="showView('tracker')">Daily Tracker</button>
+    <button class="nav-btn" id="navHistory" onclick="showView('history')">Past Performances</button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════ TRACKER VIEW ══════════════════════════════ -->
+<div class="view visible" id="viewTracker">
+  <main>
+
+    <div class="section-title">Platform Tracking</div>
+    <div class="platforms">
+      <div class="platform-card">
+        <div class="platform-header">
+          <div class="platform-icon icon-x">𝕏</div>
+          <span class="platform-name">X (Twitter)</span>
+        </div>
+        <div id="kpis-x"></div>
+      </div>
+      <div class="platform-card">
+        <div class="platform-header">
+          <div class="platform-icon icon-li">in</div>
+          <span class="platform-name">LinkedIn</span>
+        </div>
+        <div id="kpis-li"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Performance Stats</div>
+    <div class="perf-card spacer">
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <div class="section-title">Improvement Focus Areas</div>
+    <div class="focus-card">
+      <ul class="focus-list" id="focusList"></ul>
+      <button class="btn-add-focus" onclick="addFocusItem()">+ Add focus area</button>
+    </div>
+
+    <div class="eod-bar">
+      <button class="btn-save-eod" onclick="saveEndOfDay()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1v9M4.5 6.5 8 10l3.5-3.5M2 12h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Save End of Day
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════ HISTORY VIEW ══════════════════════════════ -->
+<div class="view" id="viewHistory">
+  <main>
+    <div class="pp-header">
+      <span class="pp-title">Past Performances</span>
+    </div>
+    <div id="historyContent"></div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── KPI definitions ────────────────────────────────────────────────────────
+  const KPI_KEYS = [
+    { key: 'inbound',   label: 'Inbound Leads'    },
+    { key: 'outbound',  label: 'Outbound Leads'   },
+    { key: 'followups', label: 'Follow-ups Done'  },
+    { key: 'cal_sent',  label: 'Calendars Sent'   },
+    { key: 'cal_book',  label: 'Calendars Booked' },
+  ];
+
+  // ── Date helpers ───────────────────────────────────────────────────────────
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0');
+  }
+
+  function formatDateDisplay(isoStr) {
+    const [y, m, d] = isoStr.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+  }
+
+  document.getElementById('dateBadge').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+  });
+
+  // ── Auto-reset on new day ─────────────────────────────────────────────────
+  const lastDate = localStorage.getItem('kpi_last_date');
+  const today    = todayStr();
+  if (lastDate && lastDate !== today) {
+    localStorage.removeItem('kpi_state');
+    localStorage.removeItem('kpi_focus');
+  }
+  localStorage.setItem('kpi_last_date', today);
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem('kpi_state') || '{}'); } catch { return {}; }
+  }
+  function saveState(s) { localStorage.setItem('kpi_state', JSON.stringify(s)); }
+
+  let state = loadState();
+
+  function getVal(platform, key) {
+    return (state[platform] && state[platform][key] !== undefined)
+      ? state[platform][key] : 0;
+  }
+
+  function setVal(platform, key, val) {
+    if (!state[platform]) state[platform] = {};
+    state[platform][key] = Math.max(0, parseInt(val) || 0);
+    saveState(state);
+    updateStats();
+  }
+
+  // ── Build platform KPI rows ────────────────────────────────────────────────
+  function buildPlatformRows(platform, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    KPI_KEYS.forEach(({ key, label }) => {
+      const row = document.createElement('div');
+      row.className = 'kpi-row';
+      row.innerHTML = `
+        <span class="kpi-label">${label}</span>
+        <div class="kpi-input-wrap">
+          <button class="btn-dec" onclick="adjust('${platform}','${key}',-1)">−</button>
+          <input
+            class="kpi-input" type="number" min="0"
+            id="inp-${platform}-${key}"
+            value="${getVal(platform, key)}"
+            oninput="setVal('${platform}','${key}',this.value)"
+          />
+          <button class="btn-inc" onclick="adjust('${platform}','${key}',1)">+</button>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function adjust(platform, key, delta) {
+    const newVal = getVal(platform, key) + delta;
+    setVal(platform, key, newVal);
+    document.getElementById(`inp-${platform}-${key}`).value = getVal(platform, key);
+  }
+
+  // ── Performance stats ──────────────────────────────────────────────────────
+  function calcStats(s) {
+    const g = (p, k) => (s[p] && s[p][k] !== undefined ? s[p][k] : 0);
+    const totalLeads = g('x','inbound') + g('x','outbound') + g('li','inbound') + g('li','outbound');
+    const calBooked  = g('x','cal_book') + g('li','cal_book');
+    const calSent    = g('x','cal_sent') + g('li','cal_sent');
+    const followups  = g('x','followups') + g('li','followups');
+    const convRate   = totalLeads > 0 ? ((calBooked / totalLeads) * 100).toFixed(1) + '%' : '0%';
+    return { totalLeads, calBooked, calSent, followups, convRate };
+  }
+
+  function updateStats() {
+    const { totalLeads, calBooked, calSent, followups, convRate } = calcStats(state);
+    const tiles = [
+      { label: 'Total Leads',     value: totalLeads },
+      { label: 'Conversion Rate', value: convRate   },
+      { label: 'Calls Booked',    value: calBooked  },
+      { label: 'Calendars Sent',  value: calSent    },
+      { label: 'Follow-ups Done', value: followups  },
+    ];
+    const grid = document.getElementById('statsGrid');
+    grid.innerHTML = '';
+    tiles.forEach(({ label, value }) => {
+      const tile = document.createElement('div');
+      tile.className = 'stat-tile';
+      tile.innerHTML = `<div class="stat-value">${value}</div><div class="stat-label">${label}</div>`;
+      grid.appendChild(tile);
+    });
+  }
+
+  // ── Focus areas ───────────────────────────────────────────────────────────
+  function loadFocusItems() {
+    try { return JSON.parse(localStorage.getItem('kpi_focus') || '[""]'); } catch { return ['']; }
+  }
+
+  function saveFocusItems() {
+    const items = [...document.querySelectorAll('#focusList input')].map(i => i.value);
+    localStorage.setItem('kpi_focus', JSON.stringify(items));
+  }
+
+  function renderFocusList(items) {
+    const list = document.getElementById('focusList');
+    list.innerHTML = '';
+    items.forEach((text, idx) => {
+      const li = document.createElement('li');
+      li.className = 'focus-item';
+      li.innerHTML = `
+        <input type="text" placeholder="e.g. Improve follow-up response time"
+          value="${escHtml(text)}" oninput="saveFocusItems()" />
+        <button class="btn-remove" onclick="removeFocusItem(${idx})">×</button>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function addFocusItem() {
+    const items = loadFocusItems();
+    items.push('');
+    localStorage.setItem('kpi_focus', JSON.stringify(items));
+    renderFocusList(items);
+    const inputs = document.querySelectorAll('#focusList input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+
+  function removeFocusItem(idx) {
+    const items = loadFocusItems();
+    items.splice(idx, 1);
+    if (items.length === 0) items.push('');
+    localStorage.setItem('kpi_focus', JSON.stringify(items));
+    renderFocusList(items);
+  }
+
+  // ── History ───────────────────────────────────────────────────────────────
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem('kpi_history') || '[]'); } catch { return []; }
+  }
+
+  function saveHistory(h) { localStorage.setItem('kpi_history', JSON.stringify(h)); }
+
+  // ── Save End of Day ───────────────────────────────────────────────────────
+  function saveEndOfDay() {
+    // Pull latest focus items from DOM
+    saveFocusItems();
+    const focusItems = loadFocusItems().filter(f => f.trim() !== '');
+
+    const entry = {
+      date:  today,
+      state: JSON.parse(JSON.stringify(state)),
+      focus: focusItems,
+    };
+
+    const history = loadHistory();
+    // Replace today's entry if it already exists
+    const existingIdx = history.findIndex(e => e.date === today);
+    if (existingIdx >= 0) {
+      history[existingIdx] = entry;
+    } else {
+      history.unshift(entry); // newest first
+    }
+    saveHistory(history);
+
+    showToast('End of day saved!');
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
+  function showView(name) {
+    document.getElementById('viewTracker').classList.toggle('visible', name === 'tracker');
+    document.getElementById('viewHistory').classList.toggle('visible', name === 'history');
+    document.getElementById('navTracker').classList.toggle('active', name === 'tracker');
+    document.getElementById('navHistory').classList.toggle('active', name === 'history');
+    if (name === 'history') renderHistory();
+  }
+
+  // ── Render history ────────────────────────────────────────────────────────
+  function renderHistory() {
+    const history = loadHistory();
+    const container = document.getElementById('historyContent');
+
+    if (history.length === 0) {
+      container.innerHTML = `<div class="pp-empty">No saved days yet — hit "Save End of Day" to record your first performance.</div>`;
+      return;
+    }
+
+    container.innerHTML = '<div class="history-list" id="historyList"></div>';
+    const list = document.getElementById('historyList');
+
+    history.forEach((entry, idx) => {
+      const s = entry.state || {};
+      const { totalLeads, calBooked, calSent, followups, convRate } = calcStats(s);
+
+      const card = document.createElement('div');
+      card.className = 'history-card';
+
+      // Platform rows HTML
+      const platformsHtml = ['x','li'].map(p => {
+        const name = p === 'x' ? '𝕏 X (Twitter)' : 'in LinkedIn';
+        const rows = KPI_KEYS.map(({ key, label }) => `
+          <div class="history-kpi-row">
+            <span class="history-kpi-label">${label}</span>
+            <span class="history-kpi-val">${(s[p] && s[p][key] !== undefined) ? s[p][key] : 0}</span>
+          </div>
+        `).join('');
+        return `
+          <div class="history-platform-block">
+            <h4>${name}</h4>
+            ${rows}
+          </div>
+        `;
+      }).join('');
+
+      // Focus items
+      const focusHtml = (entry.focus && entry.focus.length > 0)
+        ? `<div class="history-focus">
+            <h4>Improvement Focus Areas</h4>
+            <ul>${entry.focus.map(f => `<li>${escHtml(f)}</li>`).join('')}</ul>
+           </div>`
+        : '';
+
+      card.innerHTML = `
+        <div class="history-card-header">
+          <span class="history-date">${formatDateDisplay(entry.date)}</span>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="history-summary">${totalLeads} leads · ${calBooked} booked · ${convRate} conv.</span>
+            <button class="btn-delete-entry" onclick="deleteEntry(${idx})">Delete</button>
+          </div>
+        </div>
+        <div class="history-body">
+          <div class="history-stats-row">
+            <span class="history-stat-pill"><strong>${totalLeads}</strong> Total Leads</span>
+            <span class="history-stat-pill"><strong>${convRate}</strong> Conversion</span>
+            <span class="history-stat-pill"><strong>${calBooked}</strong> Calls Booked</span>
+            <span class="history-stat-pill"><strong>${calSent}</strong> Calendars Sent</span>
+            <span class="history-stat-pill"><strong>${followups}</strong> Follow-ups</span>
+          </div>
+          <div class="history-platforms">${platformsHtml}</div>
+          ${focusHtml}
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  function deleteEntry(idx) {
+    const history = loadHistory();
+    history.splice(idx, 1);
+    saveHistory(history);
+    renderHistory();
+    showToast('Entry deleted.');
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  buildPlatformRows('x',  'kpis-x');
+  buildPlatformRows('li', 'kpis-li');
+  updateStats();
+  renderFocusList(loadFocusItems());
+</script>
+</body>
+</html>
