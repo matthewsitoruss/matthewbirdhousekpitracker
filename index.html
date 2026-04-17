@@ -430,6 +430,101 @@
     }
     .btn-delete-entry:hover { background: #fde8e8; }
 
+    .btn-edit-entry {
+      border: 1px solid #cce0f0;
+      background: #fff;
+      color: #1e78c2;
+      border-radius: 7px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn-edit-entry:hover { background: #eaf3fb; }
+
+    .btn-save-edit {
+      border: none;
+      background: #1e78c2;
+      color: #fff;
+      border-radius: 7px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn-save-edit:hover { background: #1564a8; }
+
+    .btn-cancel-edit {
+      border: 1px solid #d6e8f7;
+      background: #fff;
+      color: #6b8fae;
+      border-radius: 7px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .btn-cancel-edit:hover { background: #f0f7ff; }
+
+    /* Edit mode inputs inside history cards */
+    .hist-edit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid #f0f7ff;
+      font-size: 0.845rem;
+    }
+    .hist-edit-row:last-child { border-bottom: none; }
+
+    .hist-edit-input {
+      width: 72px; text-align: center;
+      border: 1px solid #cce0f0; border-radius: 7px;
+      padding: 5px 6px; font-size: 0.9rem; font-weight: 600;
+      color: #1a2b3c; background: #f5f9fd; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -moz-appearance: textfield;
+    }
+    .hist-edit-input::-webkit-outer-spin-button,
+    .hist-edit-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .hist-edit-input:focus {
+      border-color: #5aadea;
+      box-shadow: 0 0 0 3px rgba(90,173,234,0.15);
+      background: #fff;
+    }
+
+    .hist-edit-focus-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+    .hist-edit-focus-item { display: flex; align-items: center; gap: 8px; }
+    .hist-edit-focus-item input[type="text"] {
+      flex: 1; border: 1px solid #cce0f0; border-radius: 7px;
+      padding: 6px 10px; font-size: 0.845rem; color: #1a2b3c;
+      background: #f5f9fd; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .hist-edit-focus-item input[type="text"]:focus {
+      border-color: #5aadea; box-shadow: 0 0 0 3px rgba(90,173,234,0.15); background: #fff;
+    }
+    .hist-edit-focus-item input[type="text"]::placeholder { color: #9fbdd4; }
+
+    .btn-add-focus-edit {
+      border: 1px dashed #5aadea; border-radius: 7px;
+      background: transparent; color: #5aadea;
+      font-size: 0.8rem; font-weight: 500;
+      padding: 6px 14px; cursor: pointer; width: 100%;
+      transition: background 0.12s;
+    }
+    .btn-add-focus-edit:hover { background: #eaf3fb; }
+
+    .edit-section-label {
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.9px; text-transform: uppercase;
+      color: #6b8fae; margin-bottom: 8px; margin-top: 16px;
+    }
+    .edit-section-label:first-child { margin-top: 0; }
+
     .spacer { margin-bottom: 24px; }
   </style>
 </head>
@@ -727,61 +822,151 @@
 
     container.innerHTML = '<div class="history-list" id="historyList"></div>';
     const list = document.getElementById('historyList');
-
     history.forEach((entry, idx) => {
-      const s = entry.state || {};
-      const { totalLeads, calBooked, calSent, followups, convRate } = calcStats(s);
-
       const card = document.createElement('div');
       card.className = 'history-card';
-
-      // Platform rows HTML
-      const platformsHtml = ['x','li'].map(p => {
-        const name = p === 'x' ? '𝕏 X (Twitter)' : 'in LinkedIn';
-        const rows = KPI_KEYS.map(({ key, label }) => `
-          <div class="history-kpi-row">
-            <span class="history-kpi-label">${label}</span>
-            <span class="history-kpi-val">${(s[p] && s[p][key] !== undefined) ? s[p][key] : 0}</span>
-          </div>
-        `).join('');
-        return `
-          <div class="history-platform-block">
-            <h4>${name}</h4>
-            ${rows}
-          </div>
-        `;
-      }).join('');
-
-      // Focus items
-      const focusHtml = (entry.focus && entry.focus.length > 0)
-        ? `<div class="history-focus">
-            <h4>Improvement Focus Areas</h4>
-            <ul>${entry.focus.map(f => `<li>${escHtml(f)}</li>`).join('')}</ul>
-           </div>`
-        : '';
-
-      card.innerHTML = `
-        <div class="history-card-header">
-          <span class="history-date">${formatDateDisplay(entry.date)}</span>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span class="history-summary">${totalLeads} leads · ${calBooked} booked · ${convRate} conv.</span>
-            <button class="btn-delete-entry" onclick="deleteEntry(${idx})">Delete</button>
-          </div>
-        </div>
-        <div class="history-body">
-          <div class="history-stats-row">
-            <span class="history-stat-pill"><strong>${totalLeads}</strong> Total Leads</span>
-            <span class="history-stat-pill"><strong>${convRate}</strong> Conversion</span>
-            <span class="history-stat-pill"><strong>${calBooked}</strong> Calls Booked</span>
-            <span class="history-stat-pill"><strong>${calSent}</strong> Calendars Sent</span>
-            <span class="history-stat-pill"><strong>${followups}</strong> Follow-ups</span>
-          </div>
-          <div class="history-platforms">${platformsHtml}</div>
-          ${focusHtml}
-        </div>
-      `;
+      card.id = `hcard-${idx}`;
+      card.innerHTML = buildCardViewHTML(entry, idx);
       list.appendChild(card);
     });
+  }
+
+  function buildCardViewHTML(entry, idx) {
+    const s = entry.state || {};
+    const { totalLeads, calBooked, calSent, followups, convRate } = calcStats(s);
+
+    const platformsHtml = ['x','li'].map(p => {
+      const name = p === 'x' ? '𝕏 X (Twitter)' : 'in LinkedIn';
+      const rows = KPI_KEYS.map(({ key, label }) => `
+        <div class="history-kpi-row">
+          <span class="history-kpi-label">${label}</span>
+          <span class="history-kpi-val">${(s[p] && s[p][key] !== undefined) ? s[p][key] : 0}</span>
+        </div>`).join('');
+      return `<div class="history-platform-block"><h4>${name}</h4>${rows}</div>`;
+    }).join('');
+
+    const focusHtml = (entry.focus && entry.focus.length > 0)
+      ? `<div class="history-focus">
+           <h4>Improvement Focus Areas</h4>
+           <ul>${entry.focus.map(f => `<li>${escHtml(f)}</li>`).join('')}</ul>
+         </div>` : '';
+
+    return `
+      <div class="history-card-header">
+        <span class="history-date">${formatDateDisplay(entry.date)}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span class="history-summary">${totalLeads} leads · ${calBooked} booked · ${convRate} conv.</span>
+          <button class="btn-edit-entry"   onclick="editEntry(${idx})">✏️ Edit</button>
+          <button class="btn-delete-entry" onclick="deleteEntry(${idx})">Delete</button>
+        </div>
+      </div>
+      <div class="history-body">
+        <div class="history-stats-row">
+          <span class="history-stat-pill"><strong>${totalLeads}</strong> Total Leads</span>
+          <span class="history-stat-pill"><strong>${convRate}</strong> Conversion</span>
+          <span class="history-stat-pill"><strong>${calBooked}</strong> Calls Booked</span>
+          <span class="history-stat-pill"><strong>${calSent}</strong> Calendars Sent</span>
+          <span class="history-stat-pill"><strong>${followups}</strong> Follow-ups</span>
+        </div>
+        <div class="history-platforms">${platformsHtml}</div>
+        ${focusHtml}
+      </div>`;
+  }
+
+  function buildCardEditHTML(entry, idx) {
+    const s = entry.state || {};
+
+    const platformsHtml = ['x','li'].map(p => {
+      const name = p === 'x' ? '𝕏 X (Twitter)' : 'in LinkedIn';
+      const rows = KPI_KEYS.map(({ key, label }) => `
+        <div class="hist-edit-row">
+          <span class="history-kpi-label">${label}</span>
+          <input class="hist-edit-input" type="number" min="0"
+            data-platform="${p}" data-key="${key}"
+            value="${(s[p] && s[p][key] !== undefined) ? s[p][key] : 0}" />
+        </div>`).join('');
+      return `<div class="history-platform-block"><h4>${name}</h4>${rows}</div>`;
+    }).join('');
+
+    const focusItems = (entry.focus && entry.focus.length > 0) ? entry.focus : [''];
+    const focusRows = focusItems.map((f, fi) => `
+      <li class="hist-edit-focus-item">
+        <input type="text" placeholder="e.g. Improve follow-up response time"
+          value="${escHtml(f)}" data-focus-idx="${fi}" />
+        <button class="btn-remove" onclick="removeEditFocus(${idx}, ${fi})">×</button>
+      </li>`).join('');
+
+    return `
+      <div class="history-card-header" style="background:#fff8ee;border-color:#f0d58c;">
+        <span class="history-date">${formatDateDisplay(entry.date)}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn-save-edit"   onclick="saveEditedEntry(${idx})">Save Changes</button>
+          <button class="btn-cancel-edit" onclick="cancelEdit(${idx})">Cancel</button>
+        </div>
+      </div>
+      <div class="history-body">
+        <div class="edit-section-label">Platform KPIs</div>
+        <div class="history-platforms">${platformsHtml}</div>
+        <div class="edit-section-label">Improvement Focus Areas</div>
+        <ul class="hist-edit-focus-list" id="edit-focus-list-${idx}">${focusRows}</ul>
+        <button class="btn-add-focus-edit" onclick="addEditFocus(${idx})">+ Add focus area</button>
+      </div>`;
+  }
+
+  // ── Edit entry ─────────────────────────────────────────────────────────────
+  function editEntry(idx) {
+    const history = loadHistory();
+    const card = document.getElementById(`hcard-${idx}`);
+    card.innerHTML = buildCardEditHTML(history[idx], idx);
+  }
+
+  function cancelEdit(idx) {
+    const history = loadHistory();
+    const card = document.getElementById(`hcard-${idx}`);
+    card.innerHTML = buildCardViewHTML(history[idx], idx);
+  }
+
+  function saveEditedEntry(idx) {
+    const history = loadHistory();
+    const card = document.getElementById(`hcard-${idx}`);
+
+    // Read KPI inputs
+    const newState = {};
+    card.querySelectorAll('.hist-edit-input').forEach(inp => {
+      const p = inp.dataset.platform;
+      const k = inp.dataset.key;
+      if (!newState[p]) newState[p] = {};
+      newState[p][k] = Math.max(0, parseInt(inp.value) || 0);
+    });
+
+    // Read focus inputs
+    const newFocus = [...card.querySelectorAll('#edit-focus-list-' + idx + ' input[type="text"]')]
+      .map(i => i.value.trim()).filter(v => v !== '');
+
+    history[idx].state = newState;
+    history[idx].focus = newFocus;
+    saveHistory(history);
+
+    card.innerHTML = buildCardViewHTML(history[idx], idx);
+    showToast('Changes saved!');
+  }
+
+  function addEditFocus(idx) {
+    const list = document.getElementById(`edit-focus-list-${idx}`);
+    const fi = list.children.length;
+    const li = document.createElement('li');
+    li.className = 'hist-edit-focus-item';
+    li.innerHTML = `
+      <input type="text" placeholder="e.g. Improve follow-up response time" data-focus-idx="${fi}" />
+      <button class="btn-remove" onclick="removeEditFocus(${idx}, ${fi})">×</button>`;
+    list.appendChild(li);
+    li.querySelector('input').focus();
+  }
+
+  function removeEditFocus(idx, fi) {
+    const list = document.getElementById(`edit-focus-list-${idx}`);
+    const items = [...list.querySelectorAll('.hist-edit-focus-item')];
+    if (items[fi]) items[fi].remove();
   }
 
   function deleteEntry(idx) {
